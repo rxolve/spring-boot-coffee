@@ -1,1 +1,1 @@
-# spring-boot-coffee
+# spring-boot-practice
