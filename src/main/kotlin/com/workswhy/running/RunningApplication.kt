@@ -2,6 +2,8 @@ package com.workswhy.running
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -62,14 +64,23 @@ class CoffeeController {
     }
 
     @PutMapping("/{id}")
-    fun update(@PathVariable id: String, @RequestBody coffee: Coffee): Coffee? {
-        return coffees
+    fun update(@PathVariable id: String, @RequestBody coffee: Coffee): ResponseEntity<Coffee>? {
+        val isExist = coffees.any { coffee: Coffee -> coffee.getId() == id }
+        println("isExist: $isExist")
+        if (!isExist) {
+            coffees += coffee
+
+            return ResponseEntity(coffee, HttpStatus.CREATED)
+        }
+        coffees
             .filter { coffee: Coffee -> coffee.getId() == id }
             .map { coffee: Coffee ->
                 coffee.setName(coffee.getName())
                 coffee
             }
             .firstOrNull()
+
+        return ResponseEntity(coffee, HttpStatus.OK)
     }
 
     @DeleteMapping("/{id}")
