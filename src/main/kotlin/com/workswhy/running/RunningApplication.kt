@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.util.*
+
 
 @SpringBootApplication
 class RunningApplication
@@ -21,76 +21,55 @@ fun main(args: Array<String>) {
     runApplication<RunningApplication>(*args)
 }
 
-class Coffee(private var name: String) {
-    private val id: String = UUID.randomUUID().toString()
-
-    fun getId(): String {
-        return id
-    }
-
-    fun getName(): String {
-        return name
-    }
-
-    fun setName(name: String) {
-        this.name = name
-    }
-}
 
 @RestController
 @RequestMapping("/coffees")
-class CoffeeController {
-    private var coffees = mutableListOf(
-        Coffee("Kaldi's Coffee"),
-        Coffee("Espresso"),
-        Coffee("Latte"),
-        Coffee("Cappuccino")
-    )
+class CoffeeController(private val coffeeRepository: CoffeeRepository) {
+    init {
+        coffeeRepository.saveAll(
+            listOf(
+                Coffee("Latte"),
+                Coffee("Mocha"),
+                Coffee("Espresso"),
+                Coffee("Americano"),
+                Coffee("Cappuccino")
+
+            )
+        )
+    }
 
     @PostMapping("")
     fun create(@RequestBody coffee: Coffee): Coffee {
-        coffees += coffee
+        coffeeRepository.save(coffee)
         return coffee
     }
 
     @GetMapping("")
     fun all(): List<Coffee> {
-        return coffees
+        return coffeeRepository.findAll().toList()
     }
 
     @GetMapping("/{id}")
     fun byId(@PathVariable id: String): Coffee? {
-        return coffees.firstOrNull { coffee: Coffee -> coffee.getId() == id }
+        return coffeeRepository.findById(id).orElse(null)
     }
 
     @PutMapping("/{id}")
     fun update(@PathVariable id: String, @RequestBody coffee: Coffee): ResponseEntity<Coffee>? {
-        val isExist = coffees.any { coffee: Coffee -> coffee.getId() == id }
-        println("isExist: $isExist")
-        if (!isExist) {
-            coffees += coffee
-
-            return ResponseEntity(coffee, HttpStatus.CREATED)
-        }
-        coffees
-            .filter { coffee: Coffee -> coffee.getId() == id }
-            .map { coffee: Coffee ->
-                coffee.setName(coffee.getName())
-                coffee
+        return coffeeRepository.existsById(id).let {
+            if (it) {
+                coffeeRepository.save(coffee)
+                return ResponseEntity(coffee, HttpStatus.OK)
+            } else {
+                coffeeRepository.save(coffee)
+                return ResponseEntity(coffee, HttpStatus.CREATED)
             }
-            .firstOrNull()
-
-        return ResponseEntity(coffee, HttpStatus.OK)
+        }
     }
 
     @DeleteMapping("/{id}")
-    fun delete(@PathVariable id: String): Coffee? {
-        return coffees
-            .filter { coffee: Coffee -> coffee.getId() == id }
-            .map { coffee: Coffee ->
-                coffees.remove(coffee)
-                coffee
-            }
-            .firstOrNull()
+    fun delete(@PathVariable id: String): ResponseEntity<String> {
+        coffeeRepository.deleteById(id)
+        return ResponseEntity("OK", HttpStatus.OK)
     }
 }
