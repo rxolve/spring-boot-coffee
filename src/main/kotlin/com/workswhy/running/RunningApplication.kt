@@ -25,19 +25,6 @@ fun main(args: Array<String>) {
 @RestController
 @RequestMapping("/coffees")
 class CoffeeController(private val coffeeRepository: CoffeeRepository) {
-    init {
-        coffeeRepository.saveAll(
-            listOf(
-                Coffee("Latte"),
-                Coffee("Mocha"),
-                Coffee("Espresso"),
-                Coffee("Americano"),
-                Coffee("Cappuccino")
-
-            )
-        )
-    }
-
     @PostMapping("")
     fun create(@RequestBody coffee: Coffee): Coffee {
         coffeeRepository.save(coffee)
